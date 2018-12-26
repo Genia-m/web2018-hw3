@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <title>Game</title>
+  <link rel="stylesheet" href="css/style.css" />
+  
+</head>
+<body>
+
+<center>
+	<h1>Welcome</h1>
+	<h1 id="title"></h1>
+	<button id="newGame">Create a new game</button>
+	<ul id="games">
+	
+	<ul>
+	<button id="signOut">sign out</button>
+</center>																								
+
+<script src="js/json3.min.js"></script>
+<script src="js/jquery-1.10.1.min.js"></script>
+<script src="js/chessboard.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/5.7.1/firebase.js"></script>
+<script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyBBWEqk39s8ZOx5LeeLdFbbS40WWSlVyDc",
+    authDomain: "chess-game-71d86.firebaseapp.com",
+    databaseURL: "https://chess-game-71d86.firebaseio.com",
+    projectId: "chess-game-71d86",
+    storageBucket: "chess-game-71d86.appspot.com",
+    messagingSenderId: "1034442198417"
+  };
+  firebase.initializeApp(config);
+  
+       var currentUser;
+  		firebase.auth().onAuthStateChanged(function(user) {
+			if (user) {
+				currentUser = user;
+				$("#title").text(currentUser.email);
+			} else {
+				location.href = "login.html";
+			}
+		});
+		  
+  $("#signOut").click(function(){
+	firebase.auth().signOut().then(function() {
+		// Sign-out successful.
+	}).catch(function(error) {
+		// An error happened.
+	});
+  });
+</script>
+	
+
+<script>
+	function Game(player1, player2, status, fen){
+		this.player1 = player1;
+		this.player2 = player2;
+		this.status = status;
+		this.fen = fen;
+	}
+	$(document).ready(function(){
+		var myGame ;
+		var games = firebase.database().ref().child('games'); 
+		$("#newGame").click(function(){
+			let game = games.push();
+			myGame = new Game(currentUser.uid,"","0","");
+			game.set(myGame);
+		});
+		
+		games.on('value', function(snapshot){
+			$("#games").empty();
+			snapshot.forEach(function(g){
+				if(g.val().status != "0") {
+					if(g.val().status == "1" && g.val().player1 == currentUser.uid )
+						location.href = "game.html";
+					return;
+				}
+				$("#games").append("<li><p class='item' data-player1='" + g.val().player1 + "' data-key='" + g.key + "'>" 
+				+ g.val().player1 
+				+ "<br />status: " + g.val().status
+				+ "</p></li>");
+			});
+			
+		});
+		
+		
+		
+		
+		$(document).on("click",".item",function(){
+			if($(this).attr('data-player1') == 
+				currentUser.uid) return;
+			let key = $(this).attr('data-key');
+			let ref = games.child(key);
+			ref.set({
+				player1: $(this).attr('data-player1'),
+				player2: currentUser.uid,
+				status: "1",
+				fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+			});
+				location.href = "game.html";
+
+			
+		});
+	
+		
+		
+
+	});
+</script>
+<script>
+
+$("#signOut").click(function(){
+firebase.auth().signOut().then(function() {
+ // Sign-out successful.
+}).catch(function(error) {
+  // An error happened.
+	});
+});
+	</script>
+   
+   
+</body>
+</html>
